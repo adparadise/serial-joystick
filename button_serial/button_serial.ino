@@ -1,8 +1,12 @@
 int buttonIndex;
-const int buttonCount = 5;
-int buttonPins[5] = {3,4,5,6,7};
-
-int bitFields[3] = {128};
+const int bitsPerField = 6;
+const int buttonCount = 24;
+int buttonPins[24] = {3,4,5,6,7,8,
+                      3,4,5,6,7,8,
+                      3,4,5,6,7,8,
+                      3,4,5,6,7,8};
+const int fieldCount = 4;
+uint8_t bitFields[4] = { 0x00, 0x40, 0x80, 0xc0 };
 
 void setup() {
   for (buttonIndex = 0; buttonIndex < buttonCount; buttonIndex++) {
@@ -17,7 +21,8 @@ void loop() {
 
   isChanged = 0;
   for (buttonIndex = 0; buttonIndex < buttonCount; buttonIndex++) {
-    buttonMask = 1 << buttonIndex;
+    fieldIndex = buttonIndex / bitsPerField;
+    buttonMask = 1 << (buttonIndex % bitsPerField);
     buttonState = digitalRead(buttonPins[buttonIndex]);
     isHigh = bitFields[fieldIndex] & buttonMask;
     if (buttonState == HIGH && !isHigh) {
@@ -30,7 +35,7 @@ void loop() {
   }
 
   if (isChanged) {
-    Serial.write(bitFields[fieldIndex]);
+    Serial.write(bitFields, fieldCount);
     delay(6);
   }
 }

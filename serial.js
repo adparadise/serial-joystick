@@ -44,9 +44,18 @@ function connect(portName) {
     });
 
     serial.on("open", function () {
+        var index, bitsStringList, bits, bitsString, position;
         console.log('open');
+        bitsStringList = ['00000000','00000000','00000000','00000000'];
         serial.on('data', function(buffer) {
-            console.log(buffer.get(0).toString(2));
+            for (index = 0; index < buffer.length; index++) {
+                bits = buffer.get(index);
+                position = (bits & 0xc0) >> 6;
+                bitsString = bits.toString(2);
+                bitsString = ("00000000" + bitsString).slice(-8);
+                bitsStringList[position] = bitsString;
+            }
+            console.log("'" + bitsStringList.join(',') + "'");
         });
     });
     serial.on('close', function () {
