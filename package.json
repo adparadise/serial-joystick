@@ -9,6 +9,10 @@
   "author": "",
   "license": "BSD",
   "dependencies": {
-    "serialport": "~1.4.0"
+    "serialport": "~1.4.0",
+    "sockjs": "~0.3.9"
+  },
+  "devDependencies": {
+    "node-static": "~0.7.3"
   }
 }
