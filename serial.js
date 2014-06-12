@@ -48,14 +48,31 @@ function connect(portName) {
         console.log('open');
         bitsStringList = ['00000000','00000000','00000000','00000000'];
         serial.on('data', function(buffer) {
+            var changed;
+
+            changed = [];
             for (index = 0; index < buffer.length; index++) {
                 bits = buffer.get(index);
                 position = (bits & 0xc0) >> 6;
                 bitsString = bits.toString(2);
                 bitsString = ("00000000" + bitsString).slice(-8);
                 bitsStringList[position] = bitsString;
+                changed[position] = true;
             }
-            console.log("'" + bitsStringList.join(',') + "'");
+            process.stdout.write("'");
+            for (position = 0; position < bitsStringList.length; position++) {
+                if (position > 0) {
+                    process.stdout.write(',');
+                }
+                if (changed[position]) {
+                    process.stdout.write('\x1b[7m');
+                }
+                process.stdout.write(bitsStringList[position]);
+                if (changed[position]) {
+                    process.stdout.write('\x1b[0m');
+                }
+            }
+            process.stdout.write("'\n");
         });
     });
     serial.on('close', function () {

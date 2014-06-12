@@ -1,11 +1,11 @@
 int buttonIndex;
-const int bitsPerField = 6;
-const int buttonCount = 24;
-int buttonPins[24] = {3,4,5,6,7,8,
-                      3,4,5,6,7,8,
-                      3,4,5,6,7,8,
-                      3,4,5,6,7,8};
+const int buttonCount = 16;
+int buttonPins[16] = {3,4,5,6,
+                      7,8,9,10,
+                      11,12,A0,A1,
+                      A2,A3,A4,A5};
 const int fieldCount = 4;
+const int bitsPerField = 6;
 uint8_t bitFields[4] = { 0x00, 0x40, 0x80, 0xc0 };
 
 void setup() {
