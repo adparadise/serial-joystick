@@ -20,6 +20,9 @@ Serial.findArduinoPortName = function (callback) {
             return callback(error);
         }
 
+        if (ports.length === 0) {
+            return callback(new Error('no serial ports found'));
+        }
         for (index = 0; index < ports.length; index++) {
             port = ports[index];
             if (arduinoPattern.exec(port.pnpId)) {

@@ -8,8 +8,19 @@
     <script src="js/sockjs-0.3.4.js"></script>
     <script src="js/client.js"></script>
     <script>
-      var client;
+      var client, body;
+
+      body = document.getElementsByTagName('body')[0];
+
+      body.addEventListener('keydown', function (event) {
+        console.log(event.keyCode);
+      });
+
       client = new Client("localhost:2600");
+      client.setBinding({
+        11: { keyCode: 38 }
+      }, true);
+      client.setEventListener(body);
       client.connect();
     </script>
   </body>

@@ -12,6 +12,19 @@ function Client () {
         this.onclose = this.onclose.bind(this);
     };
 
+    proto.setBinding = function (binding, allInverted) {
+        this.binding = binding;
+        this.allInverted = allInverted;
+    };
+
+    proto.setEventListener = function (eventListener) {
+        this.eventListener = eventListener;
+    };
+
+    proto.log = function () {
+        console.log.apply(console, arguments);
+    };
+
     proto.connect = function () {
         this.sock = new SockJS('http://' + this.hostname + '/joystick');
         this.sock.onopen = this.onopen;
@@ -20,14 +33,36 @@ function Client () {
     };
 
     proto.onopen = function () {
-        console.log('connection established');
+        this.log('connection established');
     };
 
     proto.onmessage = function (event) {
-        console.log(event.data);
+        var info, keybind;
+        var isOn, eventName, keyboardEvent;
+
+        if (!this.binding) {
+            return;
+        }
+
+        info = JSON.parse(event.data);
+        keybind = this.binding[info.address];
+        if (!keybind) {
+            this.log('no binding found for address: ', info.address);
+            return;
+        }
+
+        isOn = info.value;
+        if (this.allInverted || keybind.isInverted) {
+            isOn = !isOn;
+        }
+        eventName = isOn ? 'keydown' : 'keyup';
+
+        keyboardEvent = new CustomEvent(eventName);
+        keyboardEvent.keyCode = keybind.keyCode;
+        this.eventListener.dispatchEvent(keyboardEvent);
     };
 
     proto.onclose = function () {
-        console.log('connection broken');
+        this.log('connection broken');
     };
 }(Client.prototype));
