@@ -1,10 +1,14 @@
 var SerialPort = require("serialport");
+var Events = require('events');
+var Util = require('util');
 
 module.exports = Serial;
 
 function Serial () {
     this.initialize.apply(this, arguments);
 }
+
+Util.inherits(Serial, Events.EventEmitter);
 
 Serial.findArduinoPortName = function (callback) {
     var isFound;
@@ -84,11 +88,30 @@ Serial.findArduinoPortName = function (callback) {
             bitsString = ("00000000" + bitsString).slice(-8);
             if (this.bitsStringList[position] != bitsString) {
                 changedBytes[position] = true;
+                this.emitChanges(position, bitsString);
             }
             this.bitsStringList[position] = bitsString;
         }
 
         this.logBitsStringList(changedBytes);
+    };
+
+    proto.emitChanges = function (position, bitsString) {
+        var priorBitsString, index, priorBit, bit, address;
+
+        priorBitsString = this.bitsStringList[position];
+
+        for (index = 0; index < 6; index++) {
+            bit = bitsString[8 - index];
+            priorBit = priorBitsString[8 - index];
+            if (bit !== priorBit) {
+                address = position * 6 + index;
+                this.emit('pinChange', {
+                    address: address,
+                    value: bit === "1"
+                });
+            }
+        }
     };
 
     proto.logBitsStringList = function (changed) {
