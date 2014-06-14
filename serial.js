@@ -1,7 +1,12 @@
 var SerialPort = require("serialport");
 
+module.exports = Serial;
 
-function findArduinoPortName (callback) {
+function Serial () {
+    this.initialize.apply(this, arguments);
+}
+
+Serial.findArduinoPortName = function (callback) {
     var isFound;
 
     SerialPort.list(function (error, ports) {
@@ -23,62 +28,95 @@ function findArduinoPortName (callback) {
             callback('not found');
         }
     });
-}
-
-function handler (error, portName) {
-    if (error) {
-        console.log(error);
-        return;
-    }
-    if (portName) {
-        console.log("connecting to: ", portName);
-        connect(portName);
-    }
 };
 
-findArduinoPortName(handler);
+(function (proto) {
+    proto.initialize = function () {
+        this.bitsStringList = ['00000000','01000000','10000000','11000000'];
 
-function connect(portName) {
-    var serial = new SerialPort.SerialPort(portName, {
-        baudrate: 9600
-    });
+        this.arduinoFoundHandler = this.arduinoFoundHandler.bind(this);
+        this.dataHandler = this.dataHandler.bind(this);
+        this.closeHandler = this.closeHandler.bind(this);
+        this.errorHandler = this.errorHandler.bind(this);
+    };
 
-    serial.on("open", function () {
-        var index, bitsStringList, bits, bitsString, position;
-        console.log('open');
-        bitsStringList = ['00000000','00000000','00000000','00000000'];
-        serial.on('data', function(buffer) {
-            var changed;
+    proto.start = function () {
+        Serial.findArduinoPortName(this.arduinoFoundHandler);
+    };
 
-            changed = [];
-            for (index = 0; index < buffer.length; index++) {
-                bits = buffer.get(index);
-                position = (bits & 0xc0) >> 6;
-                bitsString = bits.toString(2);
-                bitsString = ("00000000" + bitsString).slice(-8);
-                bitsStringList[position] = bitsString;
-                changed[position] = true;
-            }
-            process.stdout.write("'");
-            for (position = 0; position < bitsStringList.length; position++) {
-                if (position > 0) {
-                    process.stdout.write(',');
-                }
-                if (changed[position]) {
-                    process.stdout.write('\x1b[7m');
-                }
-                process.stdout.write(bitsStringList[position]);
-                if (changed[position]) {
-                    process.stdout.write('\x1b[0m');
-                }
-            }
-            process.stdout.write("'\n");
+    proto.arduinoFoundHandler = function (error, portName) {
+        if (error) {
+            console.log(error);
+            return;
+        }
+        if (portName) {
+            console.log("connecting to: ", portName);
+            this.connect(portName);
+        }
+    };
+
+    proto.connect = function (portName) {
+        var self = this;
+        var serial, options;
+        options = {
+            baudrate: 9600
+        };
+
+        serial = new SerialPort.SerialPort(portName, options);
+        serial.on("open", function () {
+            console.log('open');
+
+            serial.on('data', self.dataHandler);
+            serial.on('close', self.closeHandler);
+            serial.on('error', self.errorHandler);
         });
-    });
-    serial.on('close', function () {
+    };
+
+    proto.dataHandler = function(buffer) {
+        var index, bits, bitsString, position;
+        var changedBytes, changedFields;
+
+        changedBytes = [];
+        for (index = 0; index < buffer.length; index++) {
+            bits = buffer.get(index);
+            position = (bits & 0xc0) >> 6;
+            bitsString = bits.toString(2);
+            bitsString = ("00000000" + bitsString).slice(-8);
+            if (this.bitsStringList[position] != bitsString) {
+                changedBytes[position] = true;
+            }
+            this.bitsStringList[position] = bitsString;
+        }
+
+        this.logBitsStringList(changedBytes);
+    };
+
+    proto.logBitsStringList = function (changed) {
+        var position;
+
+        changed = changed || {};
+        process.stdout.write("'");
+        for (position = 0; position < this.bitsStringList.length; position++) {
+            if (position > 0) {
+                process.stdout.write(',');
+            }
+            if (changed[position]) {
+                process.stdout.write('\x1b[7m');
+            }
+            process.stdout.write(this.bitsStringList[position]);
+            if (changed[position]) {
+                process.stdout.write('\x1b[0m');
+            }
+        }
+        process.stdout.write("'\n");
+    };
+
+    proto.closeHandler = function () {
         console.log(arguments);
-    });
-    serial.on('error', function (error) {
+    };
+
+    proto.errorHandler = function (error) {
         console.log(error);
-    });
-}
+    };
+}(Serial.prototype));
+
