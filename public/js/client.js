@@ -41,6 +41,11 @@ function Client () {
         var isOn, eventName, keyboardEvent;
 
         if (!this.binding) {
+            console.log('no bindings bound!');
+            return;
+        }
+        if (!this.eventListener) {
+            console.log('no eventListener bound!');
             return;
         }
 
