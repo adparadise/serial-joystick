@@ -1,5 +1,5 @@
 
-#define DEBUG 1
+#undef DEBUG
 
 #define KEY_CODE_LEFT_ALT	0x04
 #define KEY_CODE_LEFT_CTRL	0x01
@@ -69,7 +69,9 @@ void clearKeyReport(keyReport_t *report) {
 void sendKeyReport(struct keyReport_t *report)
 {
 #ifndef DEBUG
+    uint8_t ledStatus;
     Serial.write((uint8_t *)report, sizeof(keyReport_t));
+    ledStatus = Serial.read();
 #else
     Serial.print(report->modifiers, HEX);
     Serial.print("  ");
