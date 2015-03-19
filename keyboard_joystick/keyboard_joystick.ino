@@ -136,7 +136,7 @@ void buildKeyReport (keyReport_t *report) {
 void setup() {
   uint8_t index, fieldIndex, buttonMask;
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   delay(200);
 
   clearKeyReport(&keyReport);
