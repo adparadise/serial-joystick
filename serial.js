@@ -15,6 +15,7 @@ Serial.findArduinoPortName = function (callback) {
 
     SerialPort.list(function (error, ports) {
         var arduinoPattern = /Arduino/;
+        var osxPattern = /tty\.usbmodem/;
         var index, port, isFound;
         if (error) {
             return callback(error);
@@ -25,7 +26,8 @@ Serial.findArduinoPortName = function (callback) {
         }
         for (index = 0; index < ports.length; index++) {
             port = ports[index];
-            if (arduinoPattern.exec(port.pnpId)) {
+            if (arduinoPattern.exec(port.pnpId) ||
+                osxPattern.exec(port.pnpId)) {
                 callback(undefined, port.comName);
                 isFound = true;
                 break;
@@ -47,8 +49,15 @@ Serial.findArduinoPortName = function (callback) {
         this.errorHandler = this.errorHandler.bind(this);
     };
 
-    proto.start = function () {
-        Serial.findArduinoPortName(this.arduinoFoundHandler);
+    proto.start = function (portName) {
+        var self = this;
+        if (portName) {
+            process.nextTick(function () {
+                self.connect(portName);
+            });
+        } else {
+            Serial.findArduinoPortName(this.arduinoFoundHandler);
+        }
     };
 
     proto.arduinoFoundHandler = function (error, portName) {
@@ -104,7 +113,7 @@ Serial.findArduinoPortName = function (callback) {
 
         priorBitsString = this.bitsStringList[position];
 
-        for (index = 0; index < 6; index++) {
+        for (index = 0; index <= 6; index++) {
             bit = bitsString[8 - index];
             priorBit = priorBitsString[8 - index];
             if (bit !== priorBit) {

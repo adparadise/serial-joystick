@@ -6,9 +6,11 @@ var socket, serial;
 
 console.log('Beginning serialport to WebSocket bridge');
 
+var portName = process.argv[2];
+
 socket = new Socket(2600);
 serial = new Serial();
-serial.start();
+serial.start(portName);
 
 socket.start(function (error, connection) {
     if (error) {
